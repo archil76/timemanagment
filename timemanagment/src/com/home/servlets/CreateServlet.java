@@ -1,8 +1,8 @@
 package com.home.servlets;
 
-import com.home.timemanagment.DeveloperTaskDB;
-import com.home.timemanagment.DeveloperTask;
-import java.util.UUID;
+
+import com.home.timemanagment.DeveloperTaskModel;
+
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.ServletResponse;
@@ -23,10 +23,8 @@ public class CreateServlet extends HttpServlet
     
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
         try {
-            String id = UUID.randomUUID().toString();
-            String name = new String(request.getParameter("name").getBytes("ISO-8859-1"),"UTF-8");
-            DeveloperTask developerTask = new DeveloperTask(id, name);
-            DeveloperTaskDB.insertTask(developerTask);
+        	
+        	DeveloperTaskModel.createDeveloperTask(request.getParameter("name"));
             response.sendRedirect(String.valueOf(request.getContextPath()) + "/indexj");
         }
         catch (Exception ex) {

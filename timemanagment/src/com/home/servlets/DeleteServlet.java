@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletResponse;
 import javax.servlet.ServletRequest;
 import com.home.timemanagment.DeveloperTaskDB;
+import com.home.timemanagment.DeveloperTaskModel;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.annotation.WebServlet;
@@ -17,8 +19,8 @@ public class DeleteServlet extends HttpServlet
     
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
         try {
-            final String id = request.getParameter("id");
-            DeveloperTaskDB.delete(id);
+           
+        	DeveloperTaskModel.deleteDeveloperTask(request.getParameter("id"));
             response.sendRedirect(String.valueOf(request.getContextPath()) + "/indexj");
         }
         catch (Exception ex) {
