@@ -1,7 +1,10 @@
 package com.home.timemanagment;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,7 +138,7 @@ public class DeveloperTaskModel {
 			if (isSettingSaved) {
 				checkDatabase(result);
 			}
-			
+
 			return result;
 
 		} catch (Exception ex) {
@@ -143,36 +146,80 @@ public class DeveloperTaskModel {
 		}
 	}
 
+	public static ArrayList<DeveloperTasksList> getDeveloperTasksLists() {
+
+		return DeveloperTaskDB.select();
+
+	}
+
+	public static boolean startOrStopTiming(String id) {
+
+		try {
+
+			DeveloperTask developerTask = DeveloperTaskDB.selectOne(id);
+
+			if (developerTask != null) {
+
+				boolean isActual = developerTask.isActual();
+				developerTask.setActual(!isActual);
+
+				Timestamp timestamp = new Timestamp(Calendar.getInstance().getTimeInMillis());
+				TimeInterval timeInterval = developerTask.getLastTimeInterval();
+
+				if (timeInterval == null) {
+					developerTask.addTimeInterval(timestamp, null);
+					timeInterval = developerTask.getLastTimeInterval();
+					DeveloperTaskDB.insertTimeInterval(developerTask, timeInterval);
+				} else if (timeInterval.getEndTime() == null) {
+					timeInterval.setEndTime(timestamp);
+					DeveloperTaskDB.updateTimeInterval(developerTask, timeInterval);
+				} else {
+					developerTask.addTimeInterval(timestamp, null);
+					timeInterval = developerTask.getLastTimeInterval();
+					DeveloperTaskDB.insertTimeInterval(developerTask, timeInterval);
+				}
+			} else {
+				return false;
+			}
+			
+		} catch (Exception e) {
+			throw e;
+		}
+		
+		return true;
+
+	}
+
 	private static void checkDatabase(Map<String, Object> result) throws IOException, ServletException {
 
 		DatabaseState databaseState = DeveloperTaskDB.checkDatabase();
-		
+
 		if (databaseState == DatabaseState.OK) {
-			
+
 			result.put("databaseState", DatabaseState.OK);
 			return;
-			
+
 		} else if (databaseState == DatabaseState.TableNotExist) {
-			
+
 			boolean tablesIsCreated = createTables();
-			
+
 			if (tablesIsCreated) {
-				
+
 				result.put("databaseState", "OK");
 				return;
-			
+
 			} else {
-				
+
 				result.put("error", true);
 				result.put("message", "Tables is not created");
 				return;
-				
+
 			}
 		} else {
-			
+
 			result.put("error", true);
 			result.put("message", databaseState.toString());
-			
+
 			return;
 		}
 	}

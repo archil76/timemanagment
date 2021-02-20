@@ -4,6 +4,7 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import java.util.ArrayList;
 import com.home.timemanagment.DeveloperTaskDB;
+import com.home.timemanagment.DeveloperTaskModel;
 import com.home.timemanagment.DeveloperTasksList;
 
 import javax.servlet.http.HttpServletResponse;
@@ -20,7 +21,7 @@ public class IndexServlet extends HttpServlet {
 		
 		
 		try {
-			ArrayList<DeveloperTasksList> developerTasksLists = DeveloperTaskDB.select();
+			ArrayList<DeveloperTasksList> developerTasksLists = DeveloperTaskModel.getDeveloperTasksLists();
 			if (developerTasksLists == null) {
 				this.getServletContext().getRequestDispatcher("/editsettings").forward(request, response);
 				return;
