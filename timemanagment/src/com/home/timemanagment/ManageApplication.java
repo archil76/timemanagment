@@ -7,10 +7,10 @@ import java.sql.Connection;
 import java.util.Properties;
 
 public class ManageApplication {
-	private static final int appVersion = 3;
+	private static final int appVersion = 4;
 
 	protected static int getAppVersion() {
-		return 2;
+		return appVersion;
 	}
 
 	public static boolean createDatabase(final Properties properties, final Connection connection) {
@@ -88,6 +88,14 @@ public class ManageApplication {
 				return false;
 			}
 		}
+		
+		if (curAppVersion == 3) {
+			if(updateDatabaseInVer4(connection)) {
+				curAppVersion++;	
+			} else {
+				return false;
+			}
+		}
 
 		databaseIsUpdated = true;
 
@@ -119,6 +127,29 @@ public class ManageApplication {
 			statement.executeUpdate(sql);
 			sql = "UPDATE params SET intValue = 3 WHERE name = 'appVersion'";
 			statement.executeUpdate(sql);
+			tablesIsCreated = true;
+		} catch (Exception ex) {
+		}
+		return tablesIsCreated;
+	}
+	
+	private static boolean updateDatabaseInVer4(final Connection connection) {
+		boolean tablesIsCreated = false;
+		try {
+			Statement statement = connection.createStatement();
+			
+			String sql = "ALTER TABLE tasks ADD customer_id VARCHAR(36)";
+			statement.executeUpdate(sql);
+			
+			sql = "CREATE TABLE customers (id VARCHAR(36) PRIMARY KEY UNIQUE, name VARCHAR(256) DEFAULT NULL)";
+			statement.executeUpdate(sql);
+			
+			sql = "ALTER TABLE params ADD PRIMARY KEY (name)";
+			statement.executeUpdate(sql);
+			
+			sql = "UPDATE params SET intValue = 4 WHERE name = 'appVersion'";
+			statement.executeUpdate(sql);
+			
 			tablesIsCreated = true;
 		} catch (Exception ex) {
 		}

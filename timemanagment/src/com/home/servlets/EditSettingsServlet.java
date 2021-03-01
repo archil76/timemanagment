@@ -30,7 +30,7 @@ public class EditSettingsServlet extends HttpServlet
             request.setAttribute("username",  settings.get("username"));
             request.setAttribute("password",  settings.get("password"));
 		} catch (Exception e) {
-			// TODO: handle exception
+			
 		}
     	
         this.getServletContext().getRequestDispatcher("/editsettings.jsp").forward((ServletRequest)request, (ServletResponse)response);

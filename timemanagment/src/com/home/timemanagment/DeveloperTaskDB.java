@@ -11,17 +11,20 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 public class DeveloperTaskDB {
+	
 	public static final String rootPath;
 	public static final String PATH_TO_PROPERTIES = "config.properties";
 	private static Properties properties;
 	private static String connectorName;
 
 	static {
+		
 		rootPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
-		DeveloperTaskDB.connectorName = "com.mysql.cj.jdbc.Driver";
+		connectorName = "com.mysql.cj.jdbc.Driver";
 	}
 
 	public static ArrayList<DeveloperTasksList> select() {
@@ -94,6 +97,7 @@ public class DeveloperTaskDB {
 					oldStateId = stateId;
 				}
 			} catch (Exception ex) {
+				ex.printStackTrace();
 				return null;
 			}
 		}catch(Exception ex){
@@ -103,7 +107,7 @@ public class DeveloperTaskDB {
 		return developerTasksLists;
 	}
 
-	public static DeveloperTask selectOne(final String id) {
+	public static DeveloperTask selectTaskById(final String id) {
 		DeveloperTask developerTask = null;
 		try {
 			Class.forName(connectorName).getDeclaredConstructor().newInstance();
@@ -111,7 +115,10 @@ public class DeveloperTaskDB {
 			try {
 				final Connection connection = getConnection();
 				try {
-					final String sql = "SELECT id, name, isActual, state, task_id, startTime, endTime, duration FROM tasks LEFT JOIN timeintervals ON tasks.id = timeintervals.task_id WHERE id = ?";
+					final String sql = "SELECT id, name, isActual, state, task_id, startTime, endTime, duration, customer_id, customers.name as customer_name FROM tasks "
+							+ "LEFT JOIN timeintervals ON tasks.id = timeintervals.task_id "
+							+ "LEFT JOIN customers ON customers.customer_id = customers.id "
+							+ "WHERE id = ?";
 					try {
 						final PreparedStatement preparedStatement = connection.prepareStatement(sql);
 						try {
@@ -121,8 +128,15 @@ public class DeveloperTaskDB {
 								String name = resultSet.getString("name");
 								boolean isActual = resultSet.getBoolean("isActual");
 								int stateId = resultSet.getInt("state");
-								developerTask = new DeveloperTask(id, name, TaskState.getStateFromId(stateId),
-										isActual);
+								
+								String customer_id = resultSet.getString("customer_id");
+								String customer_name = resultSet.getString("customer_name");
+								
+								developerTask = new DeveloperTask(id, name, TaskState.getStateFromId(stateId), isActual);
+																
+								Customer customer = new Customer(customer_id, customer_name);
+								developerTask.setCustomer(customer);
+								
 								long developerTaskDuration = 0L;
 								if (resultSet.getString("task_id") != null) {
 									developerTask.addTimeInterval(resultSet.getTimestamp("startTime"),
@@ -331,6 +345,52 @@ public class DeveloperTaskDB {
 		preparedStatement.executeUpdate();
 
 	}
+	
+	public static List<Customer> selectAllCustomersList() {
+		
+		List<Customer> customersList = new ArrayList<Customer>();
+		
+		try {
+			Class.forName(connectorName).getDeclaredConstructor().newInstance();
+
+			try {
+				final Connection connection = getConnection();
+				try {
+					final String sql = "SELECT id, name FROM customers";
+					try {
+						final PreparedStatement preparedStatement = connection.prepareStatement(sql);
+						try {
+							
+							final ResultSet resultSet = preparedStatement.executeQuery();
+							if (resultSet.next()) {
+								
+								String id   = resultSet.getString("id");
+								String name = resultSet.getString("name");
+								Customer customer = new Customer(id, name);
+								customersList.add(customer);
+							}
+						} finally {
+							if (preparedStatement != null) {
+								preparedStatement.close();
+							}
+						}
+					} finally {
+
+					}
+				} finally {
+					if (connection != null) {
+						connection.close();
+					}
+				}
+			} finally {
+
+			}
+		} catch (Exception ex) {
+			System.out.println(ex);
+			// insert log
+		}
+		return customersList;
+	}
 
 	public static DatabaseState checkDatabase() {
 		DeveloperTaskDB.properties = getProperties();
@@ -359,6 +419,9 @@ public class DeveloperTaskDB {
 							connection.close();
 						}
 					}
+					if (connection != null) {
+						connection.close();
+					}
 				} finally {
 
 				}
@@ -371,19 +434,19 @@ public class DeveloperTaskDB {
 			try {
 
 				try {
-					final Connection connection = getConnection();
+					Connection connection = getConnection();
 					try {
-						final Statement statement = connection.createStatement();
-						final String sql = "show tables like 'params'";
-						final ResultSet resultSet = statement.executeQuery(sql);
+						Statement statement = connection.createStatement();
+						String sql = "show tables like 'params'";
+						ResultSet resultSet = statement.executeQuery(sql);
 						if (resultSet.next()) {
-							final boolean databaseIsUpdated = ManageApplication.updateDatabase(connection);
+							boolean databaseIsUpdated = ManageApplication.updateDatabase(connection);
 							if (databaseIsUpdated) {
 								return DatabaseState.OK;
 							}
 							return DatabaseState.OK;
 						} else {
-							final boolean tablesIsCreated = ManageApplication.createAllTables(connection);
+							boolean tablesIsCreated = ManageApplication.createAllTables(connection);
 							if (tablesIsCreated) {
 								return DatabaseState.OK;
 							}
@@ -466,17 +529,16 @@ public class DeveloperTaskDB {
 
 	private static void toComplementSettings(final Properties _properties) {
 		
-		final String url = _properties.getProperty("url");
-		final int doubleSlashPositionInUrl = url.indexOf("//");
-		final int secondarySlashPositionInUrl = url.indexOf("/", doubleSlashPositionInUrl + 2);
-		final int questionPositionInUrl = url.indexOf("?");
-		final int lengthUrl = url.length();
+		String url = _properties.getProperty("url");
+		int doubleSlashPositionInUrl = url.indexOf("//");
+		int secondarySlashPositionInUrl = url.indexOf("/", doubleSlashPositionInUrl + 2);
+		int questionPositionInUrl = url.indexOf("?");
+		int lengthUrl = url.length();
 		
-		final String serverURL = url.substring(0, secondarySlashPositionInUrl + 1);
-		final String nameDB = url.substring(secondarySlashPositionInUrl + 1, questionPositionInUrl);
-		final String parametres = url.substring(questionPositionInUrl, lengthUrl);
+		String serverURL = url.substring(0, secondarySlashPositionInUrl + 1);
+		String nameDB = url.substring(secondarySlashPositionInUrl + 1, questionPositionInUrl);
+		String parametres = url.substring(questionPositionInUrl, lengthUrl);
 		
-		//_properties.setProperty("serverURL", String.valueOf(serverURL) + parametres);
 		_properties.setProperty("serverURL", String.valueOf(serverURL) + parametres);
 		_properties.setProperty("nameDB", nameDB);
 	
@@ -506,18 +568,25 @@ public class DeveloperTaskDB {
 	}
 
 	private static Connection getConnection() throws SQLException {
-		if (DeveloperTaskDB.properties == null) {
-			DeveloperTaskDB.properties = getProperties();
+		
+		if (properties == null) {
+			properties = getProperties();
 		}
-		return DriverManager.getConnection(DeveloperTaskDB.properties.getProperty("url"),
-				DeveloperTaskDB.properties.getProperty("username"), DeveloperTaskDB.properties.getProperty("password"));
+		
+		String url = properties.getProperty("url");
+		String username = properties.getProperty("username");
+		String password = properties.getProperty("password");
+		
+		return DriverManager.getConnection(url, username, password);
 	}
 
 	private static Connection getEmptyConnection() throws SQLException {
-		if (DeveloperTaskDB.properties == null) {
-			DeveloperTaskDB.properties = new Properties();
+		
+		if (properties == null) {
+			properties = new Properties();
 		}
-		return DriverManager.getConnection(DeveloperTaskDB.properties.getProperty("serverURL"),
-				DeveloperTaskDB.properties.getProperty("username"), DeveloperTaskDB.properties.getProperty("password"));
+		
+		return DriverManager.getConnection(properties.getProperty("serverURL"),
+				properties.getProperty("username"), properties.getProperty("password"));
 	}
 }

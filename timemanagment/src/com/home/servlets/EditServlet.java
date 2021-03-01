@@ -25,11 +25,12 @@ public class EditServlet extends HttpServlet
     
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
         try {
-        	Map<String, Object> attributes = DeveloperTaskModel.selectDeveloperTaskField(request.getParameter("id"));
+        	Map<String, Object> attributes = DeveloperTaskModel.selectDeveloperTaskFields(request.getParameter("id"));
             
         	if (attributes.get("developerTask") != null) {
         		
         		request.setAttribute("developerTask", attributes.get("developerTask"));
+        		request.setAttribute("customersList", attributes.get("customersList"));
                 request.setAttribute("taskStateList", attributes.get("taskStateList"));
                 
                 this.getServletContext().getRequestDispatcher("/edit.jsp").forward((ServletRequest)request, (ServletResponse)response);

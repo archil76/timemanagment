@@ -41,14 +41,16 @@ public class DeveloperTaskModel {
 		}
 	}
 
-	public static Map<String, Object> selectDeveloperTaskField(String id) throws Exception {
+	public static Map<String, Object> selectDeveloperTaskFields(String id) throws Exception {
 
 		try {
-			final DeveloperTask developerTask = DeveloperTaskDB.selectOne(id);
-			final List<TaskState> taskStateList = Arrays.asList(TaskState.values());
+			DeveloperTask developerTask = DeveloperTaskDB.selectTaskById(id);
+			List<Customer> customersList  = DeveloperTaskDB.selectAllCustomersList();
+			List<TaskState> taskStateList = Arrays.asList(TaskState.values());
 
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put("developerTask", developerTask);
+			attributes.put("customersList", customersList);
 			attributes.put("taskStateList", taskStateList);
 
 			return attributes;
@@ -156,7 +158,7 @@ public class DeveloperTaskModel {
 
 		try {
 
-			DeveloperTask developerTask = DeveloperTaskDB.selectOne(id);
+			DeveloperTask developerTask = DeveloperTaskDB.selectTaskById(id);
 
 			if (developerTask != null) {
 

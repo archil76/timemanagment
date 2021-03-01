@@ -55,7 +55,10 @@
 								value="${developerTask.isActual}"> <input type="submit"
 								value=${developerTask.isActual ? '"Stop"' : '"Start"'}
 								class=${developerTask.isActual ? '"colortext"' : ''}>
-						</form> <a href='<c:url value="/edit?id=${developerTask.id}"/>'>Edit</a>
+						</form> 
+						
+						<a href='<c:url value="/edit?id=${developerTask.id}"/>'>Edit</a>
+						
 						<form method="post" action='<c:url value="/delete" />'
 							style="display: inline;">
 							<input type="hidden" name="id" value="${developerTask.id}">

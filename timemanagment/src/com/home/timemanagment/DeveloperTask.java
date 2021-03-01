@@ -8,9 +8,9 @@ public class DeveloperTask
 {
     private String id;
     private String name;
+    private Customer customer;
     private boolean isActual;
-  
-
+ 
 	private List<TimeInterval> timeIntervals;
     private TaskState state;
     private long mlsecDuration;
@@ -24,7 +24,8 @@ public class DeveloperTask
         
     }
     
-    public DeveloperTask(String id, String name) {
+
+	public DeveloperTask(String id, String name) {
         this.timeIntervals = new ArrayList<TimeInterval>();
         this.id = id;
         this.name = name;
@@ -47,6 +48,7 @@ public class DeveloperTask
         this.state = state;
         this.isActual = isActual;
     }
+    
     
     public String getName() {
         return this.name;
@@ -123,4 +125,12 @@ public class DeveloperTask
   	public void setActual(boolean isActual) {
   		this.isActual = isActual;
   	}
+  	
+  	public Customer getCustomer() {
+		return customer;
+	}
+
+	public void setCustomer(Customer customer) {
+		this.customer = customer;
+	}
 }
