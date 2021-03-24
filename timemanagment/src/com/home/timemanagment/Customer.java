@@ -7,11 +7,13 @@ public class Customer {
 	private String id;
     private String name;
     
-    private Customer(String name) {
+    @SuppressWarnings("unused")
+	private Customer(String name) {
 		
 	}
     
-    private Customer() {
+    @SuppressWarnings("unused")
+	private Customer() {
 		
 	}
     
