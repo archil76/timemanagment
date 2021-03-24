@@ -3,11 +3,10 @@ package com.home.servlets;
 import java.io.IOException;
 import javax.servlet.ServletException;
 
-import java.util.Map;
-
-
 import javax.servlet.ServletResponse;
 import javax.servlet.ServletRequest;
+
+import com.home.timemanagment.Customer;
 import com.home.timemanagment.DeveloperTaskModel;
 
 import javax.servlet.http.HttpServletResponse;
@@ -15,22 +14,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 
-@WebServlet({ "/edit" })
-public class EditServlet extends HttpServlet
+@WebServlet({ "/editcustomer" })
+public class EditCustomerServlet extends HttpServlet
 {
     private static final long serialVersionUID = 1L;
     
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
-        try {
-        	Map<String, Object> attributes = DeveloperTaskModel.selectDeveloperTaskFields(request.getParameter("id"));
+        
+    	try {
+        	Customer customer = DeveloperTaskModel.selectCustomerFields(request.getParameter("id"));
             
-        	if (attributes.get("developerTask") != null) {
+        	if (customer != null) {
         		
-        		request.setAttribute("developerTask", attributes.get("developerTask"));
-        		request.setAttribute("customersList", attributes.get("customersList"));
-                request.setAttribute("taskStateList", attributes.get("taskStateList"));
-                
-                this.getServletContext().getRequestDispatcher("/edit.jsp").forward((ServletRequest)request, (ServletResponse)response);
+        		request.setAttribute("customer", customer);
+        		                
+                this.getServletContext().getRequestDispatcher("/editcustomer.jsp").forward((ServletRequest)request, (ServletResponse)response);
             }
             else {
                 this.getServletContext().getRequestDispatcher("/notfound.jsp").forward((ServletRequest)request, (ServletResponse)response);
@@ -44,9 +42,9 @@ public class EditServlet extends HttpServlet
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
         try {
  
-        	DeveloperTaskModel.editDeveloperTask(request.getParameter("id"), request.getParameter("name"), request.getParameter("state"), request.getParameter("customer"));
+        	DeveloperTaskModel.editCustomer(request.getParameter("id"), request.getParameter("name"));
 
-            response.sendRedirect(String.valueOf(request.getContextPath()) + "/indexj");
+            response.sendRedirect(String.valueOf(request.getContextPath()) + "/customers");
         }
         catch (Exception ex) {
             this.getServletContext().getRequestDispatcher("/notfound.jsp").forward((ServletRequest)request, (ServletResponse)response);

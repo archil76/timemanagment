@@ -19,18 +19,26 @@ import javax.servlet.http.HttpServletResponse;
 
 public class DeveloperTaskModel {
 
-	public static void createDeveloperTask(String parameterName) throws Exception {
+	public static void createDeveloperTask(String parameterName, String customer_id) throws Exception {
 
 		try {
+			
 			String id = UUID.randomUUID().toString();
 			String name = new String(parameterName.getBytes("ISO-8859-1"), "UTF-8");
+			
 			DeveloperTask developerTask = new DeveloperTask(id, name);
+			
+			Customer customer = new Customer(customer_id, "customer");
+			developerTask.setCustomer(customer);
+			
 			DeveloperTaskDB.insertTask(developerTask);
-
+					
+			
 		} catch (Exception ex) {
 			throw ex;
 		}
 	}
+
 
 	public static void deleteDeveloperTask(String id) throws Exception {
 
@@ -39,6 +47,15 @@ public class DeveloperTaskModel {
 		} catch (Exception ex) {
 			throw ex;
 		}
+	}
+	
+	public static void deleteCustomer(String id) {
+		try {
+			DeveloperTaskDB.deleteCustomer(id);
+		} catch (Exception ex) {
+			throw ex;
+		}
+		
 	}
 
 	public static Map<String, Object> selectDeveloperTaskFields(String id) throws Exception {
@@ -60,19 +77,50 @@ public class DeveloperTaskModel {
 		}
 	}
 
-	public static void editDeveloperTask(String id, String name, String stateString) throws Exception {
+	public static List<Customer> selectCustomersList(){
+		return DeveloperTaskDB.selectAllCustomersList();
+	}
+	
+	public static Customer selectCustomerFields(String id) {
+		
+		try {
+			Customer customer = DeveloperTaskDB.selectCustomerById(id);
+			return customer;
+
+		} catch (Exception ex) {
+			throw ex;
+		}
+	}
+	
+	public static void editDeveloperTask(String id, String name, String stateString, String customer_id) throws Exception {
 
 		try {
 
 			name = new String(name.getBytes("ISO-8859-1"), "UTF-8");
-			;
+			
 			TaskState state = TaskState.valueOf(stateString);
+			Customer customer = new Customer(customer_id, "customer");
 			DeveloperTask developerTask = new DeveloperTask(id, name, state);
+			developerTask.setCustomer(customer);
 			DeveloperTaskDB.updateTask(developerTask);
 
 		} catch (Exception ex) {
 			throw ex;
 		}
+	}
+	
+	public static void editCustomer(String id, String name) throws Exception {
+		try {
+
+			name = new String(name.getBytes("ISO-8859-1"), "UTF-8");
+			
+			Customer customer = new Customer(id, name);
+			DeveloperTaskDB.updateCustomer(customer);
+
+		} catch (Exception ex) {
+			throw ex;
+		}
+		
 	}
 
 	public static Map<String, Object> getSettings() throws Exception {
@@ -191,6 +239,19 @@ public class DeveloperTaskModel {
 		return true;
 
 	}
+	
+	public static void createCustomer(String parameterName) throws Exception {
+
+		try {
+			String id = UUID.randomUUID().toString();
+			String name = new String(parameterName.getBytes("ISO-8859-1"), "UTF-8");
+			Customer customer = new Customer(id, name);
+			DeveloperTaskDB.insertCustomer(customer);
+
+		} catch (Exception ex) {
+			throw ex;
+		}
+	}	
 
 	private static void checkDatabase(Map<String, Object> result) throws IOException, ServletException {
 
@@ -229,5 +290,12 @@ public class DeveloperTaskModel {
 	public static boolean createTables() {
 		return DeveloperTaskDB.createTables();
 	}
+
+
+
+
+
+
+
 
 }

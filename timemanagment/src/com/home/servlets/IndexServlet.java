@@ -3,7 +3,6 @@ package com.home.servlets;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import java.util.ArrayList;
-import com.home.timemanagment.DeveloperTaskDB;
 import com.home.timemanagment.DeveloperTaskModel;
 import com.home.timemanagment.DeveloperTasksList;
 

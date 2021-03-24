@@ -25,8 +25,9 @@ public class CreateCustomerServlet extends HttpServlet {
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
         try {
         	
-        	DeveloperTaskModel.createDeveloperTask(request.getParameter("name"));
-            response.sendRedirect(String.valueOf(request.getContextPath()) + "/edit"); // Или назад
+        	DeveloperTaskModel.createCustomer(request.getParameter("name"));
+        	response.sendRedirect(String.valueOf(request.getContextPath()) + "/customers");
+
         }
         catch (Exception ex) {
             this.getServletContext().getRequestDispatcher("/createcustomer.jsp").forward((ServletRequest)request, (ServletResponse)response);

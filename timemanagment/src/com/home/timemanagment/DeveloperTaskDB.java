@@ -15,14 +15,14 @@ import java.util.List;
 import java.util.Properties;
 
 public class DeveloperTaskDB {
-	
+
 	public static final String rootPath;
 	public static final String PATH_TO_PROPERTIES = "config.properties";
 	private static Properties properties;
 	private static String connectorName;
 
 	static {
-		
+
 		rootPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
 		connectorName = "com.mysql.cj.jdbc.Driver";
 	}
@@ -43,56 +43,63 @@ public class DeveloperTaskDB {
 			try (Connection connection = getConnection()) {
 
 				Statement statement = connection.createStatement();
-				
-				String sql = "SELECT id, name, isActual, state, task_id, startTime, endTime, duration FROM tasks LEFT JOIN timeintervals ON tasks.id = timeintervals.task_id ORDER BY state, id";
-				
+
+				String sql = getQuerySelect();
+
 				ResultSet resultSet = statement.executeQuery(sql);
-				
+
 				String id = "@";
 				String oldId = "@";
-				
+
 				int stateId;
 				int oldStateId = -1;
-				
+
 				DeveloperTask developerTask = null;
 				DeveloperTasksList developerTasksList = null;
 				long developerTaskDuration = 0L;
-				
+
 				while (resultSet.next()) {
-				
+
 					id = resultSet.getString("id");
 					String name = resultSet.getString("name");
 					boolean isActual = resultSet.getBoolean("isActual");
+
+					String customer_id = resultSet.getString("customer_id");
+					String customer_name = resultSet.getString("customer_name");
+
 					stateId = resultSet.getInt("state");
 					TaskState taskState = TaskState.getStateFromId(stateId);
-					
+
 					if (stateId != oldStateId) {
-						
+
 						developerTasksList = new DeveloperTasksList();
-						developerTasksList.state = taskState;			
+						developerTasksList.state = taskState;
 						developerTasksList.list = new ArrayList<DeveloperTask>();
-						
+
 						developerTasksLists.add(developerTasksList);
 					}
-					
+
 					if (!id.equals(oldId)) {
-						
+
 						developerTask = new DeveloperTask(id, name, taskState, isActual);
-						
-						if(developerTasksList.list!= null) {
-							developerTasksList.list.add(developerTask);	
+						Customer customer = new Customer(customer_id, customer_name);
+						developerTask.setCustomer(customer);
+
+						if (developerTasksList.list != null) {
+							developerTasksList.list.add(developerTask);
 						}
-						
+
 						developerTaskDuration = 0L;
 					}
-					
+
 					if (developerTask != null && resultSet.getString("task_id") != null) {
-						
-						developerTask.addTimeInterval(resultSet.getTimestamp("startTime"), resultSet.getTimestamp("endTime"));
+
+						developerTask.addTimeInterval(resultSet.getTimestamp("startTime"),
+								resultSet.getTimestamp("endTime"));
 						developerTaskDuration += resultSet.getLong("duration");
 						developerTask.setMlsecDuration(developerTaskDuration);
 					}
-					
+
 					oldId = id;
 					oldStateId = stateId;
 				}
@@ -100,11 +107,17 @@ public class DeveloperTaskDB {
 				ex.printStackTrace();
 				return null;
 			}
-		}catch(Exception ex){
+		} catch (Exception ex) {
 			return null;
 		}
-		
+
 		return developerTasksLists;
+	}
+
+	private static String getQuerySelect() {
+		return "SELECT tasks.id as id,  tasks.name as name, isActual, state, task_id, startTime, endTime, duration, customer_id, customers.name as customer_name FROM tasks "
+				+ "LEFT JOIN timeintervals ON tasks.id = timeintervals.task_id "
+				+ "LEFT JOIN customers ON tasks.customer_id = customers.id " + "ORDER BY state, id";
 	}
 
 	public static DeveloperTask selectTaskById(final String id) {
@@ -112,65 +125,76 @@ public class DeveloperTaskDB {
 		try {
 			Class.forName(connectorName).getDeclaredConstructor().newInstance();
 
-			try {
-				final Connection connection = getConnection();
-				try {
-					final String sql = "SELECT id, name, isActual, state, task_id, startTime, endTime, duration, customer_id, customers.name as customer_name FROM tasks "
-							+ "LEFT JOIN timeintervals ON tasks.id = timeintervals.task_id "
-							+ "LEFT JOIN customers ON customers.customer_id = customers.id "
-							+ "WHERE id = ?";
-					try {
-						final PreparedStatement preparedStatement = connection.prepareStatement(sql);
-						try {
-							preparedStatement.setString(1, id);
-							final ResultSet resultSet = preparedStatement.executeQuery();
-							if (resultSet.next()) {
-								String name = resultSet.getString("name");
-								boolean isActual = resultSet.getBoolean("isActual");
-								int stateId = resultSet.getInt("state");
-								
-								String customer_id = resultSet.getString("customer_id");
-								String customer_name = resultSet.getString("customer_name");
-								
-								developerTask = new DeveloperTask(id, name, TaskState.getStateFromId(stateId), isActual);
-																
-								Customer customer = new Customer(customer_id, customer_name);
-								developerTask.setCustomer(customer);
-								
-								long developerTaskDuration = 0L;
-								if (resultSet.getString("task_id") != null) {
-									developerTask.addTimeInterval(resultSet.getTimestamp("startTime"),
-											resultSet.getTimestamp("endTime"));
-									developerTaskDuration += resultSet.getLong("duration");
-									developerTask.setMlsecDuration(developerTaskDuration);
-									while (resultSet.next()) {
-										developerTask.addTimeInterval(resultSet.getTimestamp("startTime"),
-												resultSet.getTimestamp("endTime"));
-										developerTaskDuration += resultSet.getLong("duration");
-										developerTask.setMlsecDuration(developerTaskDuration);
-									}
-								}
-							}
-						} finally {
-							if (preparedStatement != null) {
-								preparedStatement.close();
-							}
-						}
-					} finally {
+			try (Connection connection = getConnection()) {
 
-					}
-				} finally {
-					if (connection != null) {
-						connection.close();
+				String sql = "SELECT tasks.id as id,  tasks.name as name, isActual, state, task_id, startTime, endTime, duration, customer_id, customers.name as customer_name FROM tasks "
+						+ "LEFT JOIN timeintervals ON tasks.id = timeintervals.task_id "
+						+ "LEFT JOIN customers ON tasks.customer_id = customers.id WHERE tasks.id = ?";
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+				preparedStatement.setString(1, id);
+				final ResultSet resultSet = preparedStatement.executeQuery();
+				if (resultSet.next()) {
+					String name = resultSet.getString("name");
+					boolean isActual = resultSet.getBoolean("isActual");
+					int stateId = resultSet.getInt("state");
+
+					String customer_id = resultSet.getString("customer_id");
+					String customer_name = resultSet.getString("customer_name");
+
+					developerTask = new DeveloperTask(id, name, TaskState.getStateFromId(stateId), isActual);
+
+					Customer customer = new Customer(customer_id, customer_name);
+					developerTask.setCustomer(customer);
+
+					long developerTaskDuration = 0L;
+					if (resultSet.getString("task_id") != null) {
+						developerTask.addTimeInterval(resultSet.getTimestamp("startTime"),
+								resultSet.getTimestamp("endTime"));
+						developerTaskDuration += resultSet.getLong("duration");
+						developerTask.setMlsecDuration(developerTaskDuration);
+						while (resultSet.next()) {
+							developerTask.addTimeInterval(resultSet.getTimestamp("startTime"),
+									resultSet.getTimestamp("endTime"));
+							developerTaskDuration += resultSet.getLong("duration");
+							developerTask.setMlsecDuration(developerTaskDuration);
+						}
 					}
 				}
-			} finally {
 
 			}
 		} catch (Exception ex) {
 			System.out.println(ex);
 		}
+
 		return developerTask;
+
+	}
+	
+	public static Customer selectCustomerById(String id) {
+		Customer customer = null;
+		try {
+			Class.forName(connectorName).getDeclaredConstructor().newInstance();
+
+			try (Connection connection = getConnection()) {
+
+				String sql = "SELECT customers.id as id,  customers.name as name FROM customers WHERE customers.id = ?";
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+				preparedStatement.setString(1, id);
+				ResultSet resultSet = preparedStatement.executeQuery();
+				if (resultSet.next()) {
+					String name = resultSet.getString("name");
+					customer = new Customer(id, name);
+
+				}
+
+			}
+		} catch (Exception ex) {
+			System.out.println(ex);
+		}
+
+		return customer;
 	}
 
 	public static int insertTask(final DeveloperTask developerTask) {
@@ -179,15 +203,17 @@ public class DeveloperTaskDB {
 			Class.forName(connectorName).getDeclaredConstructor().newInstance();
 
 			try (Connection connection = getConnection()) {
-				
+
 				String id = developerTask.getId();
-				String sql = "INSERT INTO tasks (id, name) Values (?, ?)";
-				
+				String sql = "INSERT INTO tasks (id, name, customer_id) Values (?, ?, ?)";
+
 				PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
 				preparedStatement.setString(1, id);
 				preparedStatement.setString(2, developerTask.getName());
-
+				preparedStatement.setString(2, developerTask.getName());
+				preparedStatement.setString(3, developerTask.getCustomer().getId());
+				
 				preparedStatement.executeUpdate();
 
 			}
@@ -198,6 +224,30 @@ public class DeveloperTaskDB {
 		return 1;
 	}
 
+	public static int insertCustomer(Customer customer) {
+
+		try {
+			Class.forName(connectorName).getDeclaredConstructor().newInstance();
+
+			try (Connection connection = getConnection()) {
+
+				String id  = customer.getId();
+				String sql = "INSERT INTO customers (id, name) Values (?, ?)";
+
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+				preparedStatement.setString(1, id);
+				preparedStatement.setString(2, customer.getName());
+
+				preparedStatement.executeUpdate();
+
+			}
+		} catch (Exception ex) {
+
+			return 0;
+		}
+		return 1;
+	}
 	public static int insertTimeInterval(DeveloperTask developerTask, TimeInterval timeInterval) {
 
 		try {
@@ -231,15 +281,17 @@ public class DeveloperTaskDB {
 			Class.forName(connectorName).getDeclaredConstructor().newInstance();
 
 			try (Connection connection = getConnection()) {
-				String sql = "UPDATE tasks SET name = ?, state = ? WHERE id = ?";
+				String sql = "UPDATE tasks SET name = ?, state = ?, customer_id =? WHERE id = ?";
 				PreparedStatement preparedStatement = connection.prepareStatement(sql);
 				String id = developerTask.getId();
 				String name = developerTask.getName();
 				int stateId = developerTask.getState().getId();
+				String customer_id = developerTask.getCustomer().getId();
 
 				preparedStatement.setString(1, name);
 				preparedStatement.setInt(2, stateId);
-				preparedStatement.setString(3, id);
+				preparedStatement.setString(3, customer_id);
+				preparedStatement.setString(4, id);
 
 				preparedStatement.executeUpdate();
 
@@ -250,7 +302,33 @@ public class DeveloperTaskDB {
 		}
 		return 1;
 	}
+	
+	public static int updateCustomer(Customer customer) {
+		
+		try {
+			Class.forName(connectorName).getDeclaredConstructor().newInstance();
 
+			try (Connection connection = getConnection()) {
+				String sql = "UPDATE customers SET name = ? WHERE id = ?";
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);
+				
+				String id = customer.getId();
+				String name = customer.getName();
+				
+				preparedStatement.setString(1, name);
+				preparedStatement.setString(2, id);
+				
+				preparedStatement.executeUpdate();
+
+			}
+		} catch (Exception ex) {
+			System.out.println(ex);
+			return 0;
+		}
+		return 1;
+		
+	}
+	
 	public static int updateTimeInterval(DeveloperTask developerTask, TimeInterval timeInterval) {
 		try {
 			Class.forName(connectorName).getDeclaredConstructor().newInstance();
@@ -310,6 +388,30 @@ public class DeveloperTaskDB {
 
 	}
 
+	public static int deleteCustomer(String id) {
+		
+		try {
+			Class.forName(connectorName).getDeclaredConstructor().newInstance();
+
+			try (Connection connection = getConnection()) {
+
+				String sql = "DELETE FROM customers WHERE id = ?";
+
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+				preparedStatement.setString(1, id);
+
+				preparedStatement.executeUpdate();
+
+			}
+		} catch (Exception ex) {
+			return 0;
+		}
+
+		return 1;
+		
+	}
+	
 	private static void completeTimeIntervals(DeveloperTask developerTask, Connection connection) throws SQLException {
 		String sql;
 		PreparedStatement preparedStatement;
@@ -345,49 +447,37 @@ public class DeveloperTaskDB {
 		preparedStatement.executeUpdate();
 
 	}
-	
+
 	public static List<Customer> selectAllCustomersList() {
-		
+
 		List<Customer> customersList = new ArrayList<Customer>();
-		
+
 		try {
 			Class.forName(connectorName).getDeclaredConstructor().newInstance();
 
-			try {
-				final Connection connection = getConnection();
-				try {
-					final String sql = "SELECT id, name FROM customers";
-					try {
-						final PreparedStatement preparedStatement = connection.prepareStatement(sql);
-						try {
-							
-							final ResultSet resultSet = preparedStatement.executeQuery();
-							if (resultSet.next()) {
-								
-								String id   = resultSet.getString("id");
-								String name = resultSet.getString("name");
-								Customer customer = new Customer(id, name);
-								customersList.add(customer);
-							}
-						} finally {
-							if (preparedStatement != null) {
-								preparedStatement.close();
-							}
-						}
-					} finally {
+			try (Connection connection = getConnection()) {
 
-					}
-				} finally {
-					if (connection != null) {
-						connection.close();
-					}
+				String sql = "SELECT id, name FROM customers";
+
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+				ResultSet resultSet = preparedStatement.executeQuery();
+				while (resultSet.next()) {
+
+					String id = resultSet.getString("id");
+					String name = resultSet.getString("name");
+					Customer customer = new Customer(id, name);
+					customersList.add(customer);
 				}
-			} finally {
-
 			}
+
 		} catch (Exception ex) {
 			System.out.println(ex);
-			// insert log
+
+		}
+
+		if (customersList.isEmpty()) {
+			customersList.add(new Customer("0", " "));
 		}
 		return customersList;
 	}
@@ -433,8 +523,7 @@ public class DeveloperTaskDB {
 			}
 			try {
 
-				try {
-					Connection connection = getConnection();
+				try (Connection connection = getConnection()) {
 					try {
 						Statement statement = connection.createStatement();
 						String sql = "show tables like 'params'";
@@ -479,8 +568,7 @@ public class DeveloperTaskDB {
 			Class.forName(connectorName).getDeclaredConstructor().newInstance();
 			try {
 
-				try {
-					final Connection connection = getConnection();
+				try (Connection connection = getConnection()) {
 					try {
 						final Statement statement = connection.createStatement();
 						String sql = "CREATE TABLE tasks (id VARCHAR(36) PRIMARY KEY UNIQUE, name VARCHAR(256) DEFAULT NULL, isActual TINYINT(1) DEFAULT '0')";
@@ -508,7 +596,7 @@ public class DeveloperTaskDB {
 		try {
 
 			try {
-				final FileInputStream fileInputStream = new FileInputStream("config.properties");
+				FileInputStream fileInputStream = new FileInputStream("config.properties");
 				try {
 					DeveloperTaskDB.properties.load(fileInputStream);
 					fileInputStream.close();
@@ -528,27 +616,27 @@ public class DeveloperTaskDB {
 	}
 
 	private static void toComplementSettings(final Properties _properties) {
-		
+
 		String url = _properties.getProperty("url");
 		int doubleSlashPositionInUrl = url.indexOf("//");
 		int secondarySlashPositionInUrl = url.indexOf("/", doubleSlashPositionInUrl + 2);
 		int questionPositionInUrl = url.indexOf("?");
 		int lengthUrl = url.length();
-		
+
 		String serverURL = url.substring(0, secondarySlashPositionInUrl + 1);
 		String nameDB = url.substring(secondarySlashPositionInUrl + 1, questionPositionInUrl);
 		String parametres = url.substring(questionPositionInUrl, lengthUrl);
-		
+
 		_properties.setProperty("serverURL", String.valueOf(serverURL) + parametres);
 		_properties.setProperty("nameDB", nameDB);
-	
+
 	}
 
 	public static boolean setProperties(final Properties properties) {
 		try {
 
 			try {
-				final FileOutputStream fileOutputStream = new FileOutputStream("config.properties");
+				FileOutputStream fileOutputStream = new FileOutputStream("config.properties");
 				try {
 					properties.store(fileOutputStream, "+");
 					fileOutputStream.flush();
@@ -568,25 +656,30 @@ public class DeveloperTaskDB {
 	}
 
 	private static Connection getConnection() throws SQLException {
-		
+
 		if (properties == null) {
 			properties = getProperties();
 		}
-		
+
 		String url = properties.getProperty("url");
 		String username = properties.getProperty("username");
 		String password = properties.getProperty("password");
-		
+
 		return DriverManager.getConnection(url, username, password);
 	}
 
 	private static Connection getEmptyConnection() throws SQLException {
-		
+
 		if (properties == null) {
 			properties = new Properties();
 		}
-		
-		return DriverManager.getConnection(properties.getProperty("serverURL"),
-				properties.getProperty("username"), properties.getProperty("password"));
+
+		return DriverManager.getConnection(properties.getProperty("serverURL"), properties.getProperty("username"),
+				properties.getProperty("password"));
 	}
+
+
+
+
+
 }

@@ -21,7 +21,7 @@
 	<table>
 		<tr>
 			<td><a href='<c:url value="/create" />'>Создать</a></td>
-			<td></td>
+			<td><a href='<c:url value="/customers" />'>Контрагенты</a></td>
 			<td><a href='<c:url value="/editsettings" />'>Настройки</a></td>
 		</tr>
 		<c:forEach var="developerTasksList" items="${developerTasksLists}">
@@ -44,7 +44,7 @@
 					<th></th>
 				</tr>
 				<tr>
-					<td>${developerTask.name}(${developerTask.durationString})-
+					<td>${developerTask.customer.name}: ${developerTask.name}(${developerTask.durationString})-
 						${developerTask.state.description}</td>
 					<td></td>
 					<td>
@@ -52,7 +52,9 @@
 							style="display: inline;">
 							<input type="hidden" name="id" value="${developerTask.id}">
 							<input type="hidden" name="isActual"
-								value="${developerTask.isActual}"> <input type="submit"
+								value="${developerTask.isActual}"> 
+							
+							<input type="submit"
 								value=${developerTask.isActual ? '"Stop"' : '"Start"'}
 								class=${developerTask.isActual ? '"colortext"' : ''}>
 						</form> 
