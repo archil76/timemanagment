@@ -16,11 +16,13 @@ public class DeveloperTask
     private long mlsecDuration;
     private String durationString;
     
-    private DeveloperTask() {
+    @SuppressWarnings("unused")
+	private DeveloperTask() {
         
     }
     
-    private DeveloperTask(final String id) {
+    @SuppressWarnings("unused")
+	private DeveloperTask(final String id) {
         
     }
     
