@@ -18,6 +18,7 @@
 <body>
 	<h2>Мои задачи</h2>
 	<%-- 	<% System.out.println( "debug= " + pageContext.findAttribute("developerTasksLists") ); %> --%>
+	<%-- 	token --%>
 	<table>
 		<tr>
 			<td><a href='<c:url value="/create" />'>Создать</a></td>
