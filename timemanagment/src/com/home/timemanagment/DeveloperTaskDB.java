@@ -27,7 +27,7 @@ public class DeveloperTaskDB {
 		connectorName = "com.mysql.cj.jdbc.Driver";
 	}
 
-	public static ArrayList<DeveloperTasksList> select() {
+	public static ArrayList<DeveloperTasksListsList> select() {
 
 		properties = getProperties();
 
@@ -35,7 +35,8 @@ public class DeveloperTaskDB {
 			return null;
 		}
 
-		ArrayList<DeveloperTasksList> developerTasksLists = new ArrayList<DeveloperTasksList>();
+		ArrayList<DeveloperTasksListsList> developerTasksListsLists = new ArrayList<DeveloperTasksListsList>();
+		//ArrayList<DeveloperTasksList> developerTasksLists = new ArrayList<DeveloperTasksList>();
 
 		try {
 			Class.forName(connectorName).getDeclaredConstructor().newInstance();
@@ -48,12 +49,18 @@ public class DeveloperTaskDB {
 
 				ResultSet resultSet = statement.executeQuery(sql);
 
+				String customer_id = "@";
+				String oldCustomer_id = "@";
+				
 				String id = "@";
 				String oldId = "@";
 
 				int stateId;
 				int oldStateId = -1;
 
+				Customer customer = null;
+				DeveloperTasksListsList developerTasksListsList = null;
+				
 				DeveloperTask developerTask = null;
 				DeveloperTasksList developerTasksList = null;
 				long developerTaskDuration = 0L;
@@ -64,25 +71,38 @@ public class DeveloperTaskDB {
 					String name = resultSet.getString("name");
 					boolean isActual = resultSet.getBoolean("isActual");
 
-					String customer_id = resultSet.getString("customer_id");
+					customer_id = resultSet.getString("customer_id");
 					String customer_name = resultSet.getString("customer_name");
 
 					stateId = resultSet.getInt("state");
 					TaskState taskState = TaskState.getStateFromId(stateId);
+					
+					if (!customer_id.equals(oldCustomer_id)) {
+						
+						customer = new Customer(customer_id, customer_name);
+						
+						developerTasksListsList = new DeveloperTasksListsList();
+						developerTasksListsList.customer = customer;
+						developerTasksListsList.list = new ArrayList<DeveloperTasksList>();
 
+						developerTasksListsLists.add(developerTasksListsList);
+						
+						oldStateId = -1;
+					}
+					
 					if (stateId != oldStateId) {
 
 						developerTasksList = new DeveloperTasksList();
 						developerTasksList.state = taskState;
 						developerTasksList.list = new ArrayList<DeveloperTask>();
 
-						developerTasksLists.add(developerTasksList);
+						developerTasksListsList.list.add(developerTasksList);
 					}
 
 					if (!id.equals(oldId)) {
 
 						developerTask = new DeveloperTask(id, name, taskState, isActual);
-						Customer customer = new Customer(customer_id, customer_name);
+						
 						developerTask.setCustomer(customer);
 
 						if (developerTasksList.list != null) {
@@ -102,6 +122,7 @@ public class DeveloperTaskDB {
 
 					oldId = id;
 					oldStateId = stateId;
+					oldCustomer_id = customer_id;
 				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -111,13 +132,13 @@ public class DeveloperTaskDB {
 			return null;
 		}
 
-		return developerTasksLists;
+		return developerTasksListsLists;
 	}
 
 	private static String getQuerySelect() {
-		return "SELECT tasks.id as id,  tasks.name as name, isActual, state, task_id, startTime, endTime, duration, customer_id, customers.name as customer_name FROM tasks "
+		return "SELECT tasks.id as id,  tasks.name as name, isActual, state, tasks.id as task_id, startTime, endTime, duration, customer_id, customers.name as customer_name FROM tasks "
 				+ "LEFT JOIN timeintervals ON tasks.id = timeintervals.task_id "
-				+ "LEFT JOIN customers ON tasks.customer_id = customers.id " + "ORDER BY state, id";
+				+ "LEFT JOIN customers ON tasks.customer_id = customers.id " + "ORDER BY customer_id, state, id";
 	}
 
 	public static DeveloperTask selectTaskById(final String id) {

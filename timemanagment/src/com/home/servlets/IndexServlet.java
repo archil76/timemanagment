@@ -4,7 +4,7 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import java.util.ArrayList;
 import com.home.timemanagment.DeveloperTaskModel;
-import com.home.timemanagment.DeveloperTasksList;
+import com.home.timemanagment.DeveloperTasksListsList;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -20,12 +20,13 @@ public class IndexServlet extends HttpServlet {
 		
 		
 		try {
-			ArrayList<DeveloperTasksList> developerTasksLists = DeveloperTaskModel.getDeveloperTasksLists();
-			if (developerTasksLists == null) {
+			ArrayList<DeveloperTasksListsList> developerTasksListsLists = DeveloperTaskModel.getDeveloperTasksLists();
+			if (developerTasksListsLists == null) {
 				this.getServletContext().getRequestDispatcher("/editsettings").forward(request, response);
 				return;
 			}
-			request.setAttribute("developerTasksLists", developerTasksLists);
+			request.setAttribute("developerTasksListsLists", developerTasksListsLists);
+			request.setAttribute("currentTab_id", request.getParameter("currentTab_id"));
 			
 			getServletContext().getRequestDispatcher("/indexj.jsp").forward(request, response);
 		

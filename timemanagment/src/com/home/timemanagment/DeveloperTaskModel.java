@@ -193,7 +193,7 @@ public class DeveloperTaskModel {
 		}
 	}
 
-	public static ArrayList<DeveloperTasksList> getDeveloperTasksLists() {
+	public static ArrayList<DeveloperTasksListsList> getDeveloperTasksLists() {
 
 		return DeveloperTaskDB.select();
 
