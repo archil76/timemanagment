@@ -20,7 +20,7 @@ public class DeleteServlet extends HttpServlet
         try {
            
         	DeveloperTaskModel.deleteDeveloperTask(request.getParameter("id"));
-            response.sendRedirect(String.valueOf(request.getContextPath()) + "/indexj");
+            response.sendRedirect(String.valueOf(request.getContextPath()) + "/indexj?currentTab_id=" + request.getParameter("currentTab_id"));
         }
         catch (Exception ex) {
             this.getServletContext().getRequestDispatcher("/notfound.jsp").forward((ServletRequest)request, (ServletResponse)response);

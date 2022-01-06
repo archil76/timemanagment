@@ -28,6 +28,7 @@ public class IndexServlet extends HttpServlet {
 			request.setAttribute("developerTasksListsLists", developerTasksListsLists);
 			request.setAttribute("currentTab_id", request.getParameter("currentTab_id"));
 			
+
 			getServletContext().getRequestDispatcher("/indexj.jsp").forward(request, response);
 		
 		} catch (Exception e) {

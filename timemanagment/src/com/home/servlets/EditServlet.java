@@ -29,6 +29,7 @@ public class EditServlet extends HttpServlet
         		request.setAttribute("developerTask", attributes.get("developerTask"));
         		request.setAttribute("customersList", attributes.get("customersList"));
                 request.setAttribute("taskStateList", attributes.get("taskStateList"));
+                request.setAttribute("currentTab_id", request.getParameter("currentTab_id"));
                 
                 this.getServletContext().getRequestDispatcher("/edit.jsp").forward((ServletRequest)request, (ServletResponse)response);
             }

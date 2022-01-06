@@ -16,7 +16,8 @@ public class MainServlet extends HttpServlet
     private static final long serialVersionUID = 1L;
     
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.sendRedirect(String.valueOf(request.getContextPath()) + "/indexj");
+    	
+    	response.sendRedirect(String.valueOf(request.getContextPath()) + "/indexj?currentTab_id=" + request.getParameter("currentTab_id"));
     }
     
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -33,6 +34,7 @@ public class MainServlet extends HttpServlet
         catch (Exception ex) {
             this.getServletContext().getRequestDispatcher("/notfound.jsp").forward(request, response);
         }
+        
         this.doGet(request, response);
     }
 }

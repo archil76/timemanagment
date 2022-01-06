@@ -55,12 +55,11 @@
          <c:if test="${!status.last}">,</c:if>
 </c:forEach>
 {display: block;}
+
 </style>
 </head>
 <body>
 	<h2>Мои задачи</h2>
-	<%-- 	<% System.out.println( "debug= " + pageContext.findAttribute("developerTasksLists") ); %> --%>
-	<%-- 	token --%>
 	<table>
 		<tr>
 			<td><a href='<c:url value="/create" />'>Создать</a></td>
@@ -120,6 +119,7 @@
 									<form method="post" action='<c:url value="/startstop" />'
 										style="display: inline;">
 										<input type="hidden" name="id" value="${developerTask.id}">
+										<input type="hidden" name="currentTab_id" value="tab_${developerTasksLists.customer.id}">
 										<input type="hidden" name="isActual"
 											value="${developerTask.isActual}"> <input
 											type="submit"
@@ -130,6 +130,7 @@
 									<form method="post" action='<c:url value="/delete" />'
 										style="display: inline;">
 										<input type="hidden" name="id" value="${developerTask.id}">
+										<input type="hidden" name="currentTab_id" value="tab_${developerTasksLists.customer.id}">
 										<input type="submit" value="x">
 									</form>
 								</td>
